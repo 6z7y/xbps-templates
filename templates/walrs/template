@@ -1,0 +1,20 @@
+# Template file for 'walrs'
+pkgname=walrs
+version=1.1.7
+revision=1
+build_style=cargo
+short_desc="Generate colorscheme from image"
+maintainer="Pi66 <mail@pi66.xyz>"
+license="GPL-3.0-or-later"
+homepage="https://git.pi66.xyz/walrs"
+distfiles="https://github.com/Pixel2175/walrs/archive/refs/heads/main.tar.gz"
+checksum="462e53fe79b2a38a01056eacccc083bb3345eb21ba1218d626f43a05edc67423"
+
+post_install() {
+    vman walrs.1
+
+    vmkdir usr/share/walrs
+    vcopy templates usr/share/walrs/
+    vcopy scripts usr/share/walrs/
+    vcopy colorschemes usr/share/walrs/
+}
