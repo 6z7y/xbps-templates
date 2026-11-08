@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Vesktop
+Exec=vesktop %u
+Terminal=false
+Type=Application
+Icon=vesktop
+StartupWMClass=vesktop
+Comment=Alternative Discord client with Vencord support
+Categories=Network;Chat;
+MimeType=x-scheme-handler/vesktop;

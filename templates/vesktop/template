@@ -1,0 +1,30 @@
+# Template file for 'vesktop'
+pkgname=vesktop
+version=1.6.9
+revision=1
+archs="x86_64"
+build_style=fetch
+nopie=yes
+nostrip=yes
+
+_archive="vesktop-${version}.tar.gz"
+distfiles="https://github.com/Vencord/Vesktop/releases/download/v${version}/${_archive}"
+checksum=c9eabe5e0a6dc1ee3f48a32f9b876ecbf938738fef1a76bc2350eb82f3bc8517
+
+depends="gtk+3 nss libnotify libXtst libcxx libatomic alsa-lib dbus-glib xdg-utils"
+short_desc="Alternative Discord client with Vencord support"
+maintainer="Pi66 <mail@pi66.xyz>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/Vencord/Vesktop"
+changelog="https://github.com/Vencord/Vesktop/releases"
+
+do_install() {
+	vmkdir "usr/lib/${pkgname}"
+	bsdtar -xzf "${wrksrc}/${_archive}" -C "${DESTDIR}/usr/lib/${pkgname}" --strip-components=1
+	vmkdir usr/share/icons/hicolor/scalable/apps
+	vcopy "$FILESDIR/vesktop-icon.svg" usr/share/icons/hicolor/scalable/apps/vesktop.svg
+	vmkdir usr/share/applications
+	vcopy "$FILESDIR/vesktop.desktop" /usr/share/applications/
+	vmkdir usr/bin
+	ln -s "/usr/lib/${pkgname}/vesktop" "${DESTDIR}/usr/bin/vesktop"
+}
