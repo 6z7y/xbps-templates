@@ -9,15 +9,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Lint and build changed templates
+  lint:
+    name: Lint changed templates
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 30
     container:
       image: ghcr.io/void-linux/void-glibc-full
-      options: --privileged
-      volumes:
-        - /dev:/dev
       env:
         LICENSE_LIST: /vp/common/travis/license.lst
 
@@ -49,7 +46,6 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/void-linux/void-packages /vp
           for p in $(cat /tmp/pkgs); do cp -a "templates/$p" "/vp/srcpkgs/$p"; done
-          echo XBPS_ALLOW_RESTRICTED=yes >> /vp/etc/conf
           chown -R builder:builder /vp
 
       - name: Lint
@@ -60,6 +56,49 @@ jobs:
             sudo -Eu builder xlint "srcpkgs/$p/template" || rv=1
           done
           exit "${rv:-0}"
+
+  build:
+    name: Build changed templates
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    container:
+      image: ghcr.io/void-linux/void-glibc-full
+      options: --privileged
+      volumes:
+        - /dev:/dev
+
+    steps:
+      - name: Prepare container
+        run: |
+          xbps-install -Syu xbps && xbps-install -yu
+          xbps-install -y sudo bash curl git nodejs
+          useradd -G xbuilder -M builder
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find changed templates
+        id: changed
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --name-only --diff-filter=ACMRT "${BASE:-HEAD~1}" "${HEAD:-HEAD}" |
+            awk -F/ '$1=="templates" && $3=="template" {print $2}' | sort -u > /tmp/pkgs
+          echo "Packages:"; cat /tmp/pkgs
+          if [ -s /tmp/pkgs ]; then echo "found=1" >> "$GITHUB_OUTPUT"; else echo "No templates changed."; fi
+
+      - name: Prepare void-packages
+        if: steps.changed.outputs.found
+        run: |
+          git clone --depth 1 https://github.com/void-linux/void-packages /vp
+          for p in $(cat /tmp/pkgs); do cp -a "templates/$p" "/vp/srcpkgs/$p"; done
+          echo XBPS_ALLOW_RESTRICTED=yes >> /vp/etc/conf
+          echo XBPS_CHROOT_CMD=uchroot >> /vp/etc/conf
+          chown -R builder:builder /vp
 
       - name: Build
         if: steps.changed.outputs.found
