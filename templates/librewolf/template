@@ -1,0 +1,37 @@
+# Template file for 'librewolf'
+pkgname=librewolf
+version=159.0.1
+revision=1
+archs="x86_64"
+build_style=fetch
+
+_deb="librewolf-${version}-1-linux-x86_64-deb.deb"
+distfiles="https://repo.librewolf.net/pool/${_deb}"
+checksum=8f252136b41599f2af846bd6083032e2c88d1ccb043ac5e5faeffdbdfe8282b8
+
+hostmakedepends="binutils libarchive"
+depends="gtk+3 nss dbus-glib"
+short_desc="Privacy-focused Firefox browser"
+maintainer="Pi66 <mail@pi66.xyz>"
+license="MPL-2.0"
+homepage="https://librewolf.net/"
+changelog="https://codeberg.org/librewolf"
+
+# Unpack the Debian data payload only. Debian maintainer scripts and dependency
+# metadata are not applied; review the extracted files and runtime dependencies.
+do_install() {
+	local _debdir="${wrksrc}/deb"
+	local _data
+	mkdir -p "${_debdir}"
+	(cd "${_debdir}" && ar x "${wrksrc}/${_deb}")
+	_data=$(find "${_debdir}" -maxdepth 1 -type f -name 'data.tar.*' -print -quit)
+	[ -n "${_data}" ] || msg_error "Debian package has no data.tar archive.\n"
+	bsdtar -xf "${_data}" -C "${DESTDIR}" --no-same-owner
+
+	vmkdir usr/lib
+	mv "${DESTDIR}/usr/share/librewolf" "${DESTDIR}/usr/lib/librewolf"
+	ln -sf ../lib/librewolf/librewolf "${DESTDIR}/usr/bin/librewolf"
+	vsed -i 's|/usr/share/librewolf|/usr/lib/librewolf|g' \
+		"${DESTDIR}/usr/share/applications/librewolf.desktop" \
+		"${DESTDIR}/etc/apparmor.d/librewolf"
+}
