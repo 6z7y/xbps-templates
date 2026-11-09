@@ -1,0 +1,15 @@
+# Template file for 'tomu'
+pkgname=tomu
+version=1.5.2
+revision=1
+build_style=gnu-makefile
+short_desc="Terminal music player"
+maintainer="6z7y <eenanho24n@proton.me>"
+license="GPL-3.0-only"
+homepage="https://github.com/6z7y/tomu"
+distfiles="https://github.com/6z7y/tomu/archive/refs/tags/v${version}.tar.gz"
+checksum="602ce2875c1da432a3b843962a7cca2b23b276d297522be283f50462ae84dc58"
+
+hostmakedepends="pkg-config"
+makedepends="ffmpeg-devel libcurl-devel"
+depends="ffmpeg"
